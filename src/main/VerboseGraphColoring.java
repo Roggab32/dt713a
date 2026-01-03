@@ -9,17 +9,13 @@ import java.util.concurrent.*;
 
 public class VerboseGraphColoring {
     
-    private static GraphEnvironment createComplexExperimentGraph() {
-        System.out.println("\n" + "█".repeat(80));
-        System.out.println("█               DISTRIBUTED GRAPH COLORING EXPERIMENT                █");
-        System.out.println("█                  (Multi-Agent System Simulation)                   █");
-        System.out.println("█".repeat(80));
+    public static GraphEnvironment createComplexExperimentGraph() {
+        System.out.println("\n" + "=".repeat(70));
+        System.out.println("DISTRIBUTED GRAPH COLORING - MULTI-AGENT SYSTEM");
+        System.out.println("=".repeat(70));
         
-        // Create a challenging but interesting graph
+        // Create a challenging graph
         GraphEnvironment env = new GraphEnvironment(4); // 4 colors available
-        
-        System.out.println("\nGRAPH CONSTRUCTION:");
-        System.out.println("-".repeat(80));
         
         // Create 8 nodes arranged in two interconnected clusters
         String[] nodes = {"Alpha", "Bravo", "Charlie", "Delta", 
@@ -27,19 +23,13 @@ public class VerboseGraphColoring {
         
         for (String node : nodes) {
             env.addNode(node);
-            System.out.println("  Added node: " + node);
         }
-        
-        System.out.println("\nEDGE CONSTRUCTION (Creating connections):");
-        System.out.println("-".repeat(80));
         
         // Cluster 1: Alpha, Bravo, Charlie, Delta (tightly connected)
         String[] cluster1 = {"Alpha", "Bravo", "Charlie", "Delta"};
         for (int i = 0; i < cluster1.length; i++) {
             for (int j = i + 1; j < cluster1.length; j++) {
                 env.addEdge(cluster1[i], cluster1[j]);
-                System.out.println("  " + cluster1[i] + " ↔ " + cluster1[j] + 
-                                 " (Cluster 1 internal)");
             }
         }
         
@@ -48,8 +38,6 @@ public class VerboseGraphColoring {
         for (int i = 0; i < cluster2.length; i++) {
             for (int j = i + 1; j < cluster2.length; j++) {
                 env.addEdge(cluster2[i], cluster2[j]);
-                System.out.println("  " + cluster2[i] + " ↔ " + cluster2[j] + 
-                                 " (Cluster 2 internal)");
             }
         }
         
@@ -59,123 +47,126 @@ public class VerboseGraphColoring {
         env.addEdge("Charlie", "Golf");
         env.addEdge("Delta", "Hotel");
         
-        System.out.println("\n  Alpha ↔ Echo    (Cross-cluster bridge)");
-        System.out.println("  Bravo ↔ Foxtrot (Cross-cluster bridge)");
-        System.out.println("  Charlie ↔ Golf  (Cross-cluster bridge)");
-        System.out.println("  Delta ↔ Hotel   (Cross-cluster bridge)");
-        
         // Add some extra connections for complexity
         env.addEdge("Alpha", "Golf");
         env.addEdge("Charlie", "Hotel");
         
-        System.out.println("  Alpha ↔ Golf    (Extra complexity)");
-        System.out.println("  Charlie ↔ Hotel (Extra complexity)");
-        
-        System.out.println("\nGRAPH STATISTICS:");
-        System.out.println("-".repeat(80));
-        System.out.println("  Total nodes: 8");
-        System.out.println("  Total edges: 22");
-        System.out.println("  Available colors: 4");
-        System.out.println("  Minimum colors required (chromatic number): 4");
-        
-        System.out.println("\n" + "█".repeat(80));
-        System.out.println("█              EXPERIMENT SETUP COMPLETE                           █");
-        System.out.println("█".repeat(80));
+        System.out.println("Graph created with 8 nodes in two interconnected clusters");
+        System.out.println("Total edges: 22");
+        System.out.println("Available colors: 4");
+        System.out.println("Minimum colors required (chromatic number): 4");
+        System.out.println("=".repeat(70) + "\n");
         
         return env;
     }
     
-    private static void runVerboseExperiment() throws InterruptedException {
+    public static void runExperiment() throws InterruptedException {
         GraphEnvironment env = createComplexExperimentGraph();
-        
-        System.out.println("\n\nAGENT INITIALIZATION:");
-        System.out.println("=".repeat(80));
         
         // Create coordinator
         CoordinatorAgent coordinator = new CoordinatorAgent(env);
         
         // Create and register all agents
         Map<String, SimpleColoringAgent> agents = new HashMap<>();
-        List<String> nodeIds = new ArrayList<>();
-        
         for (graph.GraphNode node : env.getAllNodes()) {
             String nodeId = node.getId();
-            nodeIds.add(nodeId);
             SimpleColoringAgent agent = new SimpleColoringAgent(nodeId, env);
             agents.put(nodeId, agent);
             coordinator.registerAgent(nodeId);
-            
-            System.out.println("  Created agent for node: " + nodeId);
         }
         
-        System.out.println("\nTotal agents created: " + agents.size());
-        
         // Start coordinator
-        System.out.println("\n\nSTARTING THE SYSTEM:");
-        System.out.println("=".repeat(80));
         coordinator.start();
         
         // Wait a moment before starting agents
-        Thread.sleep(1000);
+        Thread.sleep(500);
         
-        // Start all agents in random order (simulating distributed startup)
-        System.out.println("\n\nAGENT ACTIVATION SEQUENCE:");
-        System.out.println("-".repeat(80));
-        
+        // Start all agents in random order
+        System.out.println("\nStarting all agents simultaneously...\n");
         ExecutorService executor = Executors.newCachedThreadPool();
         Random random = new Random();
-        List<String> startupOrder = new ArrayList<>(nodeIds);
-        Collections.shuffle(startupOrder);
         
-        for (String nodeId : startupOrder) {
-            SimpleColoringAgent agent = agents.get(nodeId);
-            
-            int delay = random.nextInt(500);
-            System.out.printf("  %s will start in %dms%n", nodeId, delay);
-            
-            executor.submit(() -> {
+        // Record start time
+        long startTime = System.currentTimeMillis();
+        
+        // Start agents with staggered delays
+        List<Future<?>> futures = new ArrayList<>();
+        for (SimpleColoringAgent agent : agents.values()) {
+            Future<?> future = executor.submit(() -> {
                 try {
-                    Thread.sleep(delay);
-                    System.out.println("\n  → ACTIVATING: " + nodeId);
+                    // Random delay between 0-400ms to simulate real distributed startup
+                    Thread.sleep(random.nextInt(400));
                     agent.start();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             });
+            futures.add(future);
         }
         
-        System.out.println("\n" + "▷".repeat(80));
-        System.out.println("▷                    EXPERIMENT IN PROGRESS                       ▷");
-        System.out.println("▷                (Agents will now begin coloring)                 ▷");
-        System.out.println("▷".repeat(80) + "\n");
+        // Wait for all agents to start
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
         
-        // Let the system run
-        Thread.sleep(15000); // 15 seconds runtime
+        // Wait for coordinator to find solution and stop everything
+        System.out.println("\n" + "~".repeat(70));
+        System.out.println("All agents started. Waiting for solution...");
+        System.out.println("~".repeat(70) + "\n");
         
-        System.out.println("\n\n" + "◼".repeat(80));
-        System.out.println("◼                    EXPERIMENT TIME LIMIT REACHED                ◼");
-        System.out.println("◼".repeat(80));
+        // Monitor and wait for completion
+        int maxWaitSeconds = 30;
+        for (int i = 0; i < maxWaitSeconds * 10; i++) {
+            Thread.sleep(100);
+            
+            // Check if coordinator is still running
+            if (!coordinator.isRunning()) {
+                System.out.println("\nCoordinator has terminated (solution found).");
+                break;
+            }
+            
+            // Check if we've waited too long
+            if (i == maxWaitSeconds * 10 - 1) {
+                System.out.println("\n" + "!".repeat(70));
+                System.out.println("Timeout reached! Stopping experiment manually.");
+                System.out.println("!" + " ".repeat(68) + "!");
+                coordinator.stop();
+            }
+        }
         
-        // Stop everything
-        coordinator.stop();
-        agents.values().forEach(agent -> {
+        // Stop any remaining agents
+        for (SimpleColoringAgent agent : agents.values()) {
             if (agent.isRunning()) {
                 agent.stop();
             }
-        });
+        }
         
+        // Calculate elapsed time
+        long endTime = System.currentTimeMillis();
+        long elapsedTime = endTime - startTime;
+        
+        // Shutdown executor
         executor.shutdown();
-        if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+        try {
+            if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
             executor.shutdownNow();
         }
         
         // Final analysis
-        printFinalAnalysis(env, agents);
+        printFinalAnalysis(env, agents, elapsedTime);
     }
     
     private static void printFinalAnalysis(GraphEnvironment env, 
-                                         Map<String, SimpleColoringAgent> agents) {
-        System.out.println("\n\n" + "📊".repeat(40));
+                                         Map<String, SimpleColoringAgent> agents,
+                                         long elapsedTime) {
+        System.out.println("\n" + "📊".repeat(40));
         System.out.println("📊                      FINAL ANALYSIS                           📊");
         System.out.println("📊".repeat(40));
         
@@ -183,12 +174,11 @@ public class VerboseGraphColoring {
         System.out.println("-".repeat(80));
         
         // Check each node's status
-        for (graph.GraphNode node : env.getAllNodes().stream()
-                .sorted(Comparator.comparing(graph.GraphNode::getId))
-                .toList()) {
-            
+        List<graph.GraphNode> nodes = new ArrayList<>(env.getAllNodes());
+        nodes.sort((n1, n2) -> n1.getId().compareTo(n2.getId()));
+        
+        for (graph.GraphNode node : nodes) {
             String agentId = node.getId();
-            SimpleColoringAgent agent = agents.get(agentId);
             
             String status;
             if (!node.isColored()) {
@@ -199,8 +189,7 @@ public class VerboseGraphColoring {
                 status = "OK (color " + node.getColor() + ")";
             }
             
-            System.out.printf("  %-10s: %-25s | Steps: %3d%n", 
-                agentId, status, agent.getStepCount());
+            System.out.printf("  %-10s: %-25s%n", agentId, status);
         }
         
         System.out.println("\nSYSTEM METRICS:");
@@ -229,52 +218,72 @@ public class VerboseGraphColoring {
         System.out.println("  Colors used: " + colorsUsed.size() + 
                           " out of " + env.getAvailableColors().size() + " available");
         
-        // Agent performance
-        System.out.println("\nAGENT PERFORMANCE SUMMARY:");
+        // Performance metrics
+        System.out.println("\nPERFORMANCE METRICS:");
+        System.out.println("-".repeat(80));
+        System.out.printf("  Total time: %.2f seconds%n", elapsedTime / 1000.0);
+        System.out.println("  Total agents: " + agents.size());
+        
+        // Count running vs stopped agents
+        int runningAgents = 0;
+        for (SimpleColoringAgent agent : agents.values()) {
+            if (agent.isRunning()) runningAgents++;
+        }
+        System.out.println("  Agents still running: " + runningAgents);
+        
+        // Graph statistics
+        System.out.println("\nGRAPH STATISTICS:");
+        System.out.println("-".repeat(80));
+        System.out.println("  Total nodes: " + env.getAllNodes().size());
+        
+        // Calculate average degree
+        int totalEdges = 0;
+        for (graph.GraphNode node : env.getAllNodes()) {
+            totalEdges += node.getNeighborIds().size();
+        }
+        double avgDegree = totalEdges / (double) env.getAllNodes().size();
+        System.out.printf("  Average node degree: %.2f%n", avgDegree);
+        
+        // Show the actual coloring
+        System.out.println("\nFINAL COLORING:");
         System.out.println("-".repeat(80));
         
-        int totalSteps = agents.values().stream()
-            .mapToInt(SimpleColoringAgent::getStepCount)
-            .sum();
-        double avgSteps = totalSteps / (double) agents.size();
+        // Group nodes by color
+        Map<Integer, List<String>> colorGroups = new TreeMap<>();
+        for (graph.GraphNode node : env.getAllNodes()) {
+            if (node.isColored()) {
+                colorGroups.computeIfAbsent(node.getColor(), k -> new ArrayList<>())
+                          .add(node.getId());
+            }
+        }
         
-        System.out.printf("  Total agent steps: %d%n", totalSteps);
-        System.out.printf("  Average steps per agent: %.1f%n", avgSteps);
-        
-        // Find most/least active agents
-        String mostActive = agents.entrySet().stream()
-            .max(Comparator.comparingInt(e -> e.getValue().getStepCount()))
-            .map(Map.Entry::getKey)
-            .orElse("None");
-        
-        String leastActive = agents.entrySet().stream()
-            .min(Comparator.comparingInt(e -> e.getValue().getStepCount()))
-            .map(Map.Entry::getKey)
-            .orElse("None");
-        
-        System.out.println("  Most active agent: " + mostActive + 
-                          " (" + agents.get(mostActive).getStepCount() + " steps)");
-        System.out.println("  Least active agent: " + leastActive + 
-                          " (" + agents.get(leastActive).getStepCount() + " steps)");
+        if (!colorGroups.isEmpty()) {
+            for (Map.Entry<Integer, List<String>> entry : colorGroups.entrySet()) {
+                Collections.sort(entry.getValue());
+                System.out.printf("  Color %d: %s%n", entry.getKey(), entry.getValue());
+            }
+        } else {
+            System.out.println("  No nodes are colored");
+        }
         
         System.out.println("\n" + "🎯".repeat(40));
         System.out.println("🎯                 EXPERIMENT COMPLETE                           🎯");
-        System.out.println("🎯".repeat(40));
         
         if (env.isValidColoring()) {
-            System.out.println("\n✨ SUCCESS: The multi-agent system successfully found a valid coloring!");
+            System.out.println("🎯                ✅ SUCCESS: Valid coloring found!              🎯");
         } else {
-            System.out.println("\n⚠️  PARTIAL SUCCESS: The system converged but conflicts remain.");
-            System.out.println("   This demonstrates the challenge of distributed coordination.");
+            System.out.println("🎯                ⚠️  Partial success - conflicts remain         🎯");
         }
+        
+        System.out.println("🎯".repeat(40));
     }
     
     public static void main(String[] args) {
         try {
-            System.out.println("Initializing Distributed Graph Coloring Experiment...\n");
+            System.out.println("Initializing Distributed Graph Coloring Experiment...");
             Thread.sleep(1000);
             
-            runVerboseExperiment();
+            runExperiment();
             
         } catch (InterruptedException e) {
             System.err.println("Experiment was interrupted!");

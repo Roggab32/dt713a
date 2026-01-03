@@ -17,7 +17,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
     
     private final Set<Integer> neighborColors;
     private int myColor;
-    private int stepCount;
     private final Random random;
     
     public SimpleColoringAgent(String agentId, GraphEnvironment environment) {
@@ -26,7 +25,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
         this.messageBus = MessageBus.getInstance();
         this.neighborColors = new HashSet<>();
         this.myColor = -1;
-        this.stepCount = 0;
         this.random = new Random();
         this.running = false;
     }
@@ -40,7 +38,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             running = true;
             agentThread = new Thread(this, agentId);
             agentThread.start();
-            System.out.println(agentId + ": Agent started");
         }
     }
     
@@ -50,14 +47,12 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
         if (agentThread != null) {
             agentThread.interrupt();
         }
-        System.out.println(agentId + ": Agent stopped");
     }
     
     @Override
     public void run() {
-        while (running && stepCount < 50) {
-            stepCount++;
-            
+        // Run until stopped by coordinator
+        while (running) {
             try {
                 // 1. Check neighbors' colors
                 gatherNeighborColors();
@@ -75,15 +70,14 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
                 // 4. Process incoming messages
                 processMessages();
                 
-                Thread.sleep(100 + random.nextInt(100));
+                // Random delay to simulate real asynchrony
+                Thread.sleep(80 + random.nextInt(120));
                 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
         }
-        
-        System.out.println(agentId + ": Completed after " + stepCount + " steps");
     }
     
     private void gatherNeighborColors() {
@@ -107,7 +101,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             if (!neighborColors.contains(color)) {
                 myColor = color;
                 environment.getNode(agentId).setColor(color);
-                System.out.println(agentId + ": Chose color " + color);
                 return;
             }
         }
@@ -115,7 +108,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
         // If all colors are used by neighbors, pick random
         myColor = availableColors.get(random.nextInt(availableColors.size()));
         environment.getNode(agentId).setColor(myColor);
-        System.out.println(agentId + ": Forced to choose color " + myColor + " (conflict possible)");
     }
     
     private void broadcastMyColor() {
@@ -133,17 +125,13 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
     private void resolveConflict() {
         if (!environment.hasConflict(agentId)) return;
         
-        System.out.println(agentId + ": Resolving conflict (current color: " + myColor + ")");
-        
         List<Integer> availableColors = environment.getAvailableColors();
         
         // Try to find a conflict-free color
         for (int color : availableColors) {
             if (!neighborColors.contains(color) && color != myColor) {
-                int oldColor = myColor;
                 myColor = color;
                 environment.getNode(agentId).setColor(color);
-                System.out.println(agentId + ": Changed color from " + oldColor + " to " + color);
                 return;
             }
         }
@@ -151,7 +139,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
         // If no conflict-free color, reset
         environment.getNode(agentId).resetColor();
         myColor = -1;
-        System.out.println(agentId + ": Could not resolve conflict, resetting color");
     }
     
     private void processMessages() throws InterruptedException {
@@ -167,10 +154,9 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             int neighborColor = (int) message.getContent();
             neighborColors.add(neighborColor);
         } else if ("STOP".equals(message.getType())) {
-            stop();
+            stop();  // Stop when coordinator tells us to
         }
     }
     
     public int getCurrentColor() { return myColor; }
-    public int getStepCount() { return stepCount; }
 }
