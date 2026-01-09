@@ -53,7 +53,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
             iteration++;
             
             try {
-                // Check if we have a valid coloring
                 if (environment.isFullyColored() && environment.isValidColoring()) {
                     System.out.println("\n" + "=".repeat(60));
                     System.out.println("COORDINATOR: PERFECT COLORING FOUND!");
@@ -65,12 +64,10 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
                     break;
                 }
                 
-                // Print detailed progress every 5 iterations
                 if (iteration % 5 == 0) {
                     printProgressReport();
                 }
                 
-                // Process registration messages
                 processMessages();
                 
                 Thread.sleep(150);
@@ -98,14 +95,12 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
         int conflicts = 0;
         Map<Integer, Integer> colorCounts = new HashMap<>();
         
-        // Collect statistics
         for (GraphNode node : environment.getAllNodes()) {
             if (node.isColored()) {
                 colored++;
                 int color = node.getColor();
                 colorCounts.put(color, colorCounts.getOrDefault(color, 0) + 1);
                 
-                // Check conflicts
                 boolean hasConflict = false;
                 for (String neighborId : node.getNeighborIds()) {
                     GraphNode neighbor = environment.getNode(neighborId);
@@ -124,7 +119,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
         System.out.println("Active conflicts: " + conflicts);
         System.out.println("Valid coloring so far: " + (conflicts == 0 ? "YES" : "NO"));
         
-        // Show color distribution
         if (!colorCounts.isEmpty()) {
             System.out.print("Color distribution: ");
             List<Integer> colors = new ArrayList<>(colorCounts.keySet());
@@ -135,7 +129,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
             System.out.println();
         }
         
-        // Show specific nodes with conflicts
         if (conflicts > 0) {
             System.out.println("Nodes with conflicts:");
             for (GraphNode node : environment.getAllNodes()) {
@@ -159,7 +152,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
         System.out.println("\nCOORDINATOR: Detailed Node Status");
         System.out.println("-".repeat(50));
         
-        // Sort nodes by ID
         List<GraphNode> nodes = new ArrayList<>(environment.getAllNodes());
         Collections.sort(nodes, new Comparator<GraphNode>() {
             public int compare(GraphNode n1, GraphNode n2) {
@@ -167,17 +159,14 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
             }
         });
         
-        // Print table header
         System.out.printf("%-10s %-8s %-12s %-20s\n", 
             "Node", "Color", "Status", "Neighbors (Colors)");
         System.out.println("-".repeat(50));
         
-        // Print each node
         for (GraphNode node : nodes) {
             String colorStr = node.isColored() ? String.valueOf(node.getColor()) : "none";
             String status = environment.hasConflict(node.getId()) ? "CONFLICT" : "OK";
             
-            // Build neighbor info string
             StringBuilder neighborInfo = new StringBuilder();
             for (String neighborId : node.getNeighborIds()) {
                 GraphNode neighbor = environment.getNode(neighborId);
@@ -194,7 +183,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
                 node.getId(), colorStr, status, neighborInfo.toString().trim());
         }
         
-        // Summary statistics
         System.out.println("\nCOORDINATOR: Summary");
         System.out.println("-".repeat(50));
         System.out.println("Total nodes: " + environment.getAllNodes().size());
@@ -203,7 +191,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
         System.out.println("Valid coloring: " + environment.isValidColoring());
         System.out.println("Experiment iterations: " + iteration);
         
-        // Color usage
         Map<Integer, List<String>> colorGroups = new HashMap<>();
         for (GraphNode node : environment.getAllNodes()) {
             if (node.isColored()) {
@@ -246,7 +233,6 @@ public class CoordinatorAgent implements NodeAgent, Runnable {
         System.out.println("\nCOORDINATOR: Stop signals sent to all " + 
                          registeredAgents.size() + " agents");
         
-        // Also stop itself after a short delay
         new Thread(() -> {
             try {
                 Thread.sleep(500);

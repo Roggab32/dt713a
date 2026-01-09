@@ -51,26 +51,20 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
     
     @Override
     public void run() {
-        // Run until stopped by coordinator
         while (running) {
             try {
-                // 1. Check neighbors' colors
                 gatherNeighborColors();
                 
-                // 2. Choose or adjust color
                 if (!environment.getNode(agentId).isColored()) {
                     chooseColor();
                 } else if (environment.hasConflict(agentId)) {
                     resolveConflict();
                 }
                 
-                // 3. Broadcast color to neighbors
                 broadcastMyColor();
                 
-                // 4. Process incoming messages
                 processMessages();
                 
-                // Random delay to simulate real asynchrony
                 Thread.sleep(80 + random.nextInt(120));
                 
             } catch (InterruptedException e) {
@@ -96,7 +90,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
     private void chooseColor() {
         List<Integer> availableColors = environment.getAvailableColors();
         
-        // Find first available color not used by neighbors
         for (int color : availableColors) {
             if (!neighborColors.contains(color)) {
                 myColor = color;
@@ -105,7 +98,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             }
         }
         
-        // If all colors are used by neighbors, pick random
         myColor = availableColors.get(random.nextInt(availableColors.size()));
         environment.getNode(agentId).setColor(myColor);
     }
@@ -127,7 +119,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
         
         List<Integer> availableColors = environment.getAvailableColors();
         
-        // Try to find a conflict-free color
         for (int color : availableColors) {
             if (!neighborColors.contains(color) && color != myColor) {
                 myColor = color;
@@ -136,7 +127,6 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             }
         }
         
-        // If no conflict-free color, reset
         environment.getNode(agentId).resetColor();
         myColor = -1;
     }
@@ -154,7 +144,7 @@ public class SimpleColoringAgent implements NodeAgent, Runnable {
             int neighborColor = (int) message.getContent();
             neighborColors.add(neighborColor);
         } else if ("STOP".equals(message.getType())) {
-            stop();  // Stop when coordinator tells us to
+            stop();
         }
     }
     
